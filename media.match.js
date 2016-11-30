@@ -5,6 +5,7 @@ window.matchMedia || (window.matchMedia = function (win) {
 
     // Internal globals
     var _doc        = win.document,
+        _screen     = win.screen,
         _viewport   = _doc.documentElement,
         _queries    = [],
         _queryID    = 0,
@@ -16,6 +17,13 @@ window.matchMedia || (window.matchMedia = function (win) {
                     // not screen and
                     // screen
                     // screen and
+        _units   = {
+            cm: 2.54,
+            mm: 25.4,
+            pt: 72,
+            pc: 6,
+            'in': 1
+        },
         _typeExpr   = /\s*(only|not)?\s*(screen|print|[a-z\-]+)\s*(and)?\s*/i,
                     // (-vendor-min-width: 300px)
                     // (min-width: 300px)
@@ -115,6 +123,9 @@ window.matchMedia || (window.matchMedia = function (win) {
                             if (unit === 'px') {
                                 // If unit is px
                                 value = Number(length);
+                            } else if (_units[unit]) {
+                                // If unit is absolute length units
+                                value = (length * _features.resolution / _units[unit]).toFixed(2);
                             } else if (unit === 'em' || unit === 'rem') {
                                 // Convert relative length unit to pixels
                                 // Assumed base font size is 16px
@@ -171,9 +182,9 @@ window.matchMedia || (window.matchMedia = function (win) {
             // Sets properties of '_features' that change on resize and/or orientation.
             var w   = win.innerWidth || _viewport.clientWidth,
                 h   = win.innerHeight || _viewport.clientHeight,
-                dw  = win.screen.width,
-                dh  = win.screen.height,
-                c   = win.screen.colorDepth,
+                dw  = _screen.width,
+                dh  = _screen.height,
+                c   = _screen.colorDepth,
                 x   = win.devicePixelRatio;
 
             _features.width                     = w;
@@ -185,7 +196,7 @@ window.matchMedia || (window.matchMedia = function (win) {
             _features.color                     = c;
             _features['color-index']            = Math.pow(2, c);
             _features.orientation               = (h >= w ? 'portrait' : 'landscape');
-            _features.resolution                = (x && x * 96) || win.screen.deviceXDPI || 96;
+            _features.resolution                = (x && x * 96) || _screen.deviceXDPI || 96;
             _features['device-pixel-ratio']     = x || 1;
         },
 
@@ -210,7 +221,7 @@ window.matchMedia || (window.matchMedia = function (win) {
                         if (query) {
                             match = _matches(query.mql.media);
 
-                            if ((match && !query.mql.matches) || (!match && query.mql.matches)) {
+                            if (match !== query.mql.matches) {
                                 query.mql.matches = match;
 
                                 if (query.listeners) {
@@ -225,7 +236,6 @@ window.matchMedia || (window.matchMedia = function (win) {
                     } while(qIndex--);
                 }
 
-                
             }, 10);
         },
 
